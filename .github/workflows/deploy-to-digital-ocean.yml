@@ -1,0 +1,43 @@
+name: Deploy Client to Digital Ocean
+
+on:
+  push:
+    branches: [ master ]  # Using master branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'  # Adjust to your Node.js version
+
+      - name: Install dependencies
+        run: yarn install
+
+      - name: Build for web
+        run: npx expo export --platform web
+        # Alternatively, if you have a custom build script:
+        # run: yarn build:web
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.7.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add host key
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H 143.244.134.91 >> ~/.ssh/known_hosts
+
+      - name: Deploy to Digital Ocean
+        run: |
+          # Directory should already exist and be owned by crmuser
+          
+          # Copy the dist or web-build folder
+          rsync -avz --delete ./dist/ crmuser@143.244.134.91:/var/www/stars-gdp.com/

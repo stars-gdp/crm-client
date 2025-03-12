@@ -16,8 +16,8 @@ import { observer } from "mobx-react";
 import { format } from "date-fns";
 import { API_URL, API_ENDPOINT } from "./config/api.config";
 import leadStore from "./stores/leads.store";
-import { ILead } from "./typescript/interfaces/ILead";
 import { useRouter } from "expo-router";
+import SocketService from "@/app/services/socket.service";
 
 // Interface for conversation messages
 interface IMessage {
@@ -90,18 +90,37 @@ const LeadChat = observer(() => {
   const [isSending, setIsSending] = useState(false);
   const flatListRef = useRef<FlatList>(null);
 
-  const selectedLead = leadStore.selectedLead as ILead | null;
+  useEffect(() => {
+    const handleMessageActivity = (data: any) => {
+      const currentSelectedLead = leadStore.selectedLead;
+      console.log(
+        data.leadPhone === currentSelectedLead?.lead_phone,
+        data.leadPhone,
+        currentSelectedLead?.lead_phone,
+      );
+      if (data.leadPhone === currentSelectedLead?.lead_phone) {
+        fetchConversations();
+      }
+    };
+
+    SocketService.onMessageActivity(handleMessageActivity);
+
+    // Don't forget to clean up the socket event listener
+    return () => {
+      SocketService.offMessageActivity(handleMessageActivity);
+    };
+  }, []);
 
   // Function to fetch conversations
   const fetchConversations = async () => {
-    if (!selectedLead) return;
+    if (!leadStore.selectedLead) return;
 
     setIsLoading(true);
     setError(null);
 
     try {
       const response = await fetch(
-        `${API_URL}${API_ENDPOINT}/leads/phone/${selectedLead.lead_phone}/conversations`,
+        `${API_URL}${API_ENDPOINT}/leads/phone/${leadStore.selectedLead.lead_phone}/conversations`,
       );
 
       if (!response.ok) {
@@ -122,17 +141,17 @@ const LeadChat = observer(() => {
 
   // Function to send a new message
   const sendMessage = async () => {
-    if (!selectedLead || !newMessage.trim()) return;
+    if (!leadStore.selectedLead || !newMessage.trim()) return;
 
     setIsSending(true);
 
     // Create a temporary message to show immediately in the UI
     const tempMessage: IMessage = {
-      lead_id: selectedLead.id,
+      lead_id: leadStore.selectedLead.id,
       message_id: -Date.now(), // Temporary negative ID
       media_id: null,
-      lead_name: selectedLead.lead_name,
-      lead_phone: selectedLead.lead_phone,
+      lead_name: leadStore.selectedLead.lead_name,
+      lead_phone: leadStore.selectedLead.lead_phone,
       message_text: newMessage,
       direction: "outgoing",
       timestamp: null,
@@ -149,7 +168,7 @@ const LeadChat = observer(() => {
 
     try {
       const response = await fetch(
-        `${API_URL}${API_ENDPOINT}/leads/phone/${selectedLead.lead_phone}/send-message`,
+        `${API_URL}${API_ENDPOINT}/leads/phone/${leadStore.selectedLead.lead_phone}/send-message`,
         {
           method: "POST",
           headers: {
@@ -186,12 +205,12 @@ const LeadChat = observer(() => {
 
   // Fetch conversations when component mounts or selected lead changes
   useEffect(() => {
-    if (selectedLead) {
+    if (leadStore.selectedLead) {
       fetchConversations();
     } else {
       setMessages([]);
     }
-  }, [selectedLead?.id]);
+  }, [leadStore.selectedLead?.id]);
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -203,7 +222,7 @@ const LeadChat = observer(() => {
   }, [messages.length]);
 
   // If no lead is selected, show a placeholder
-  if (!selectedLead) {
+  if (!leadStore.selectedLead) {
     return (
       <SafeAreaView style={styles.noSelectionContainer}>
         <Text style={styles.noSelectionText}>
@@ -229,8 +248,12 @@ const LeadChat = observer(() => {
           />
         )}
         <View>
-          <Text style={styles.headerTitle}>{selectedLead.lead_name}</Text>
-          <Text style={styles.headerSubtitle}>{selectedLead.lead_phone}</Text>
+          <Text style={styles.headerTitle}>
+            {leadStore.selectedLead.lead_name}
+          </Text>
+          <Text style={styles.headerSubtitle}>
+            {leadStore.selectedLead.lead_phone}
+          </Text>
         </View>
       </View>
 

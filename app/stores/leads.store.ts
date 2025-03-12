@@ -61,6 +61,11 @@ class LeadStore {
       return;
     }
     const lead = this.leads?.find((lead) => lead.id === id);
+    // if (!!lead) {
+    //   SocketService.subscribeToLead(lead.lead_phone);
+    // } else {
+    //   SocketService.unSubscribeToLead(this.selectedLead?.lead_phone || "");
+    // }
     this.selectedLead = lead || null;
   }
 

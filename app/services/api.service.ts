@@ -1,5 +1,10 @@
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
-import { API_URL, API_ENDPOINT, API_FUNCTIONS } from "../config/api.config";
+import {
+  API_URL,
+  API_ENDPOINT,
+  API_FUNCTIONS,
+  API_ROUTES,
+} from "../config/api.config";
 
 // Create axios instance with base configuration
 const apiClient = axios.create({
@@ -120,6 +125,12 @@ class ApiService {
     config?: AxiosRequestConfig,
   ): Promise<ApiResponse<T | null>> {
     return this.get<T>(API_FUNCTIONS.getLeads, params, config);
+  }
+
+  async switchAttention(phone: string) {
+    return this.post(
+      `${API_ROUTES.leads}/phone/${phone}${API_FUNCTIONS.switchAttention}`,
+    );
   }
 }
 

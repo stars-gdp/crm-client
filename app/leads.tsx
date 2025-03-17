@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   StyleSheet,
   View,
@@ -9,12 +9,14 @@ import {
   SafeAreaView,
   StatusBar,
   Platform,
+  TextInput,
 } from "react-native";
 import { observer } from "mobx-react";
 import leadStore from "./stores/leads.store";
 import { ILead } from "./typescript/interfaces/ILead";
 import { format } from "date-fns";
 import { useRouter } from "expo-router";
+import LeadsFilter from "@/app/components/leads-filter";
 
 // Component for displaying a status item with label and value
 const StatusItem = ({
@@ -96,13 +98,21 @@ const LeadCard = ({ lead, onPress }: { lead: ILead; onPress: () => void }) => {
 };
 
 // Main leads screen component
-const Leads = observer(() => {
+const Leads = () => {
   const router = useRouter();
+
+  const [filteredPhone, setFilteredPhone] = useState<string>("");
 
   // Fetch leads when component mounts
   useEffect(() => {
-    leadStore.fetchLeads();
+    leadStore.fetchLeads().then(() => {
+      leadStore.sortLeads("bom_date", "desc");
+    });
   }, []);
+
+  useEffect(() => {
+    leadStore.filterByPhone(filteredPhone);
+  }, [filteredPhone]);
 
   // Handle lead selection
   const handleLeadPress = (leadId: number) => {
@@ -141,6 +151,18 @@ const Leads = observer(() => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
+      <TextInput
+        returnKeyType={"done"}
+        style={styles.input}
+        value={filteredPhone}
+        onChangeText={setFilteredPhone.bind(this)}
+        placeholder="Filter by phone..."
+        placeholderTextColor="#888"
+        multiline
+        maxLength={1000}
+        keyboardType={"phone-pad"}
+        autoCapitalize="none"
+      />
 
       {leadStore.isLoading && (
         <View style={styles.refreshIndicator}>
@@ -148,8 +170,16 @@ const Leads = observer(() => {
         </View>
       )}
 
+      <LeadsFilter />
+
       <FlatList
-        data={leadStore.leads}
+        refreshing={leadStore.isLoading}
+        onRefresh={() => {
+          leadStore.fetchLeads().then(() => {
+            leadStore.sortLeads("bom_date", "desc");
+          });
+        }}
+        data={leadStore.filteredLeads ?? leadStore.leads}
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
           <LeadCard lead={item} onPress={() => handleLeadPress(item.id)} />
@@ -164,7 +194,7 @@ const Leads = observer(() => {
       />
     </SafeAreaView>
   );
-});
+};
 
 // Styles
 const styles = StyleSheet.create({
@@ -307,6 +337,18 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#888",
   },
+  input: {
+    flex: 1,
+    backgroundColor: "#f0f0f0",
+    borderRadius: 20,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    paddingTop: 10, // To center text vertically
+    paddingRight: 10,
+    fontSize: 16,
+    maxHeight: 100,
+    minHeight: 40,
+  },
 });
 
-export default Leads;
+export default observer(Leads);

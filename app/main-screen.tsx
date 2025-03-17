@@ -4,7 +4,7 @@ import { observer } from "mobx-react";
 import Leads from "./leads";
 import LeadChatScreen from "./lead-chat";
 
-const MainScreen = observer(() => {
+const MainScreen = () => {
   return (
     <View style={styles.container}>
       <View style={styles.leadsListContainer}>
@@ -16,7 +16,7 @@ const MainScreen = observer(() => {
       </View>
     </View>
   );
-});
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -33,4 +33,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default MainScreen;
+export default observer(MainScreen);

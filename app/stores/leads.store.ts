@@ -5,6 +5,7 @@ import { ILead } from "@/app/typescript/interfaces/ILead";
 class LeadStore {
   // Observable properties
   leads: ILead[] | null = [];
+  filteredLeads?: ILead[] | null = [];
   selectedLead: ILead | null = null;
   isLoading: boolean = false;
   error: string | null = null;
@@ -15,6 +16,7 @@ class LeadStore {
       selectedLead: observable,
       isLoading: observable,
       error: observable,
+      filteredLeads: observable,
       fetchLeads: action.bound,
       selectLead: action.bound,
       createLead: action.bound,
@@ -22,6 +24,9 @@ class LeadStore {
       deleteLead: action.bound,
       clearSelectedLead: action.bound,
       setError: action.bound,
+      sortLeads: action.bound,
+      switchAttention: action.bound,
+      filterByPhone: action.bound,
     });
   }
 
@@ -40,6 +45,7 @@ class LeadStore {
           this.error = response.error;
         } else {
           this.leads = response.data;
+          this.filteredLeads = response.data;
         }
         this.isLoading = false;
       });
@@ -48,6 +54,27 @@ class LeadStore {
         this.error =
           error instanceof Error ? error.message : "Failed to fetch leads";
         this.isLoading = false;
+      });
+    }
+  }
+
+  async switchAttention(phone: string) {
+    this.error = null;
+
+    try {
+      const response = await apiService.switchAttention(phone);
+
+      runInAction(() => {
+        if (response.error) {
+          this.error = response.error;
+        } else {
+          this.fetchLeads();
+        }
+      });
+    } catch (error) {
+      runInAction(() => {
+        this.error =
+          error instanceof Error ? error.message : "Failed to switch attention";
       });
     }
   }
@@ -192,13 +219,88 @@ class LeadStore {
   /**
    * Filter leads by various criteria
    */
-  filterLeads(criteria: Partial<ILead>): ILead[] | undefined {
-    return this.leads?.filter((lead) => {
+  filterLeads(
+    criteria: Partial<ILead>,
+    isNegation: boolean = false,
+  ): ILead[] | undefined {
+    this.filteredLeads = this.leads?.filter((lead) => {
       return Object.keys(criteria).every((key) => {
         const typedKey = key as keyof ILead;
-        return lead[typedKey] === criteria[typedKey as keyof Partial<ILead>];
+        const criteriaValue = criteria[typedKey as keyof Partial<ILead>];
+
+        if (isNegation) {
+          return lead[typedKey] !== criteriaValue;
+        } else {
+          return lead[typedKey] === criteriaValue;
+        }
       });
     });
+
+    return this.filteredLeads;
+  }
+
+  filterByPhone(phone: string) {
+    if (!!phone) {
+      this.filteredLeads = this.leads?.filter((lead) => {
+        // Handle case when phone is undefined or empty
+        if (!phone) return false;
+
+        // Convert both to strings and remove any non-digit characters
+        const cleanedLeadPhone = String(lead.lead_phone).replace(/\D/g, "");
+        const cleanedSearchPhone = String(phone).replace(/\D/g, "");
+
+        // Check if the lead phone number contains the search term
+        return cleanedLeadPhone.includes(cleanedSearchPhone);
+      });
+    } else {
+      this.filteredLeads = this.leads;
+    }
+  }
+
+  sortLeads(sortField: keyof ILead = "id", order: "asc" | "desc" = "asc") {
+    this.filteredLeads = this.leads?.sort((a, b) => {
+      const aValue = a[sortField];
+      const bValue = b[sortField];
+
+      // Handle null values
+      if (aValue === null && bValue === null) return 0;
+      if (aValue === null) return 1;
+      if (bValue === null) return -1;
+
+      // Handle date fields
+      const dateFields: Array<keyof ILead> = [
+        "created_at",
+        "bom_date",
+        "bit_date",
+        "pt_date",
+        "wg_date",
+      ];
+      if (dateFields.includes(sortField)) {
+        const dateA = new Date(aValue as string).getTime();
+        const dateB = new Date(bValue as string).getTime();
+
+        return order === "asc" ? dateA - dateB : dateB - dateA;
+      }
+
+      // Handle id field
+      if (sortField === "id") {
+        return order === "asc"
+          ? (aValue as number) - (bValue as number)
+          : (bValue as number) - (aValue as number);
+      }
+
+      // For other fields (strings)
+      const strA = String(aValue || "");
+      const strB = String(bValue || "");
+
+      return order === "asc"
+        ? strA.localeCompare(strB)
+        : strB.localeCompare(strA);
+    });
+  }
+
+  resetFilters(): void {
+    this.filteredLeads = this.leads;
   }
 
   /**

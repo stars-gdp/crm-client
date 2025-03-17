@@ -18,6 +18,7 @@ import { API_URL, API_ENDPOINT } from "./config/api.config";
 import leadStore from "./stores/leads.store";
 import { useRouter } from "expo-router";
 import SocketService from "@/app/services/socket.service";
+import LeadActionsPopup from "@/app/components/popups/lead-actions.popup";
 
 // Interface for conversation messages
 interface IMessage {
@@ -82,7 +83,7 @@ const MessageBubble = ({ message }: { message: IMessage }) => {
 };
 
 // Lead chat screen component
-const LeadChat = observer(() => {
+const LeadChat = () => {
   const [messages, setMessages] = useState<IMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -93,11 +94,6 @@ const LeadChat = observer(() => {
   useEffect(() => {
     const handleMessageActivity = (data: any) => {
       const currentSelectedLead = leadStore.selectedLead;
-      console.log(
-        data.leadPhone === currentSelectedLead?.lead_phone,
-        data.leadPhone,
-        currentSelectedLead?.lead_phone,
-      );
       if (data.leadPhone === currentSelectedLead?.lead_phone) {
         fetchConversations();
       }
@@ -299,6 +295,7 @@ const LeadChat = observer(() => {
 
         {/* Input area */}
         <View style={styles.inputContainer}>
+          <LeadActionsPopup />
           <TextInput
             returnKeyType={"done"}
             style={styles.input}
@@ -330,7 +327,7 @@ const LeadChat = observer(() => {
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
-});
+};
 
 // Styles optimized for web and mobile
 const styles = StyleSheet.create({
@@ -482,10 +479,11 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: "row",
     padding: 10,
+    gap: 8,
     backgroundColor: "white",
     borderTopWidth: 1,
     borderTopColor: "#e0e0e0",
-    alignItems: "flex-end",
+    alignItems: "center",
   },
   input: {
     flex: 1,
@@ -518,4 +516,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default LeadChat;
+export default observer(LeadChat);

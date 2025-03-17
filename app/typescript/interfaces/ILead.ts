@@ -17,4 +17,5 @@ export interface ILead {
   fu_bit_sent: boolean;
   fu2_bit_sent: boolean;
   created_at: string;
+  needs_attention: boolean;
 }

@@ -20,7 +20,7 @@ const LeadActionsPopup: React.FC = () => {
           return (
             <TouchableOpacity
               onPress={() => {
-                item.action?.(leadStore.selectedLead?.lead_phone ?? "");
+                item.action?.(leadStore.selectedLead?.id ?? -1);
               }}
               style={{
                 backgroundColor: "cyan",

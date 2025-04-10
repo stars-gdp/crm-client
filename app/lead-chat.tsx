@@ -94,7 +94,10 @@ const LeadChat = () => {
   useEffect(() => {
     const handleMessageActivity = (data: any) => {
       const currentSelectedLead = leadStore.selectedLead;
-      if (data.leadPhone === currentSelectedLead?.lead_phone) {
+      if (
+        data.leadPhone === currentSelectedLead?.lead_phone ||
+        data.leadPhone === currentSelectedLead?.tg_chat_id
+      ) {
         fetchConversations();
       }
     };
@@ -116,7 +119,7 @@ const LeadChat = () => {
 
     try {
       const response = await fetch(
-        `${API_URL}${API_ENDPOINT}/leads/phone/${leadStore.selectedLead.lead_phone}/conversations`,
+        `${API_URL}${API_ENDPOINT}/leads/${leadStore.selectedLead.id}/conversations`,
       );
 
       if (!response.ok) {
@@ -164,7 +167,7 @@ const LeadChat = () => {
 
     try {
       const response = await fetch(
-        `${API_URL}${API_ENDPOINT}/leads/phone/${leadStore.selectedLead.lead_phone}/send-message`,
+        `${API_URL}${API_ENDPOINT}/leads/${leadStore.selectedLead.id}/send-message`,
         {
           method: "POST",
           headers: {

@@ -18,4 +18,6 @@ export interface ILead {
   fu2_bit_sent: boolean;
   created_at: string;
   needs_attention: boolean;
+  tg_chat_id: number;
+  tg_username: string;
 }

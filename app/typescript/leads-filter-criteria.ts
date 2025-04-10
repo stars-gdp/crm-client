@@ -7,7 +7,11 @@ export const LeadsFilterCriteria: Record<string, IFilterCriterion> = {
   },
   BOM: {
     name: "BOM",
-    criteria: { bom_text: null, bom_date: null, opted_out: true },
+    criteria: {
+      bom_text: null,
+      bom_date: null,
+      opted_out: true,
+    },
     isNegation: true,
   },
   BIT: {

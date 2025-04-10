@@ -160,7 +160,6 @@ const Leads = () => {
         placeholderTextColor="#888"
         multiline
         maxLength={1000}
-        keyboardType={"phone-pad"}
         autoCapitalize="none"
       />
 

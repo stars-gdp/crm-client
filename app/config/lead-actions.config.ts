@@ -1,7 +1,7 @@
 import leadStore from "@/app/stores/leads.store";
 
-const switchNeedsAttention = (phone: string) => {
-  leadStore.switchAttention(phone);
+const switchNeedsAttention = (id: number) => {
+  leadStore.switchAttention(id);
 };
 
 export const LEAD_ACTIONS = [

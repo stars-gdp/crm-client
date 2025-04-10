@@ -127,9 +127,9 @@ class ApiService {
     return this.get<T>(API_FUNCTIONS.getLeads, params, config);
   }
 
-  async switchAttention(phone: string) {
+  async switchAttention(id: number) {
     return this.post(
-      `${API_ROUTES.leads}/phone/${phone}${API_FUNCTIONS.switchAttention}`,
+      `${API_ROUTES.leads}/${id}${API_FUNCTIONS.switchAttention}`,
     );
   }
 }

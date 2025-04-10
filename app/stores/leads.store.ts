@@ -44,7 +44,10 @@ class LeadStore {
         if (response.error) {
           this.error = response.error;
         } else {
-          this.leads = response.data;
+          this.leads = response.data!.map((lead: ILead) => ({
+            ...lead,
+            lead_phone: lead.lead_phone || lead.tg_username,
+          }));
           this.filteredLeads = response.data;
         }
         this.isLoading = false;
@@ -58,11 +61,11 @@ class LeadStore {
     }
   }
 
-  async switchAttention(phone: string) {
+  async switchAttention(id: number) {
     this.error = null;
 
     try {
-      const response = await apiService.switchAttention(phone);
+      const response = await apiService.switchAttention(id);
 
       runInAction(() => {
         if (response.error) {
@@ -240,17 +243,14 @@ class LeadStore {
   }
 
   filterByPhone(phone: string) {
+    console.log(phone);
     if (!!phone) {
       this.filteredLeads = this.leads?.filter((lead) => {
         // Handle case when phone is undefined or empty
         if (!phone) return false;
 
-        // Convert both to strings and remove any non-digit characters
-        const cleanedLeadPhone = String(lead.lead_phone).replace(/\D/g, "");
-        const cleanedSearchPhone = String(phone).replace(/\D/g, "");
-
         // Check if the lead phone number contains the search term
-        return cleanedLeadPhone.includes(cleanedSearchPhone);
+        return lead.lead_phone.includes(phone);
       });
     } else {
       this.filteredLeads = this.leads;
